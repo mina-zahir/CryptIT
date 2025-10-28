@@ -1,0 +1,22 @@
+{
+  "name": "cryptit",
+  "version": "1.0.0",
+  "description": "This is for interview project",
+  "keywords": [
+    "websocket",
+    "jest",
+    "ws",
+    "cryptit"
+  ],
+  "license": "ISC",
+  "author": "Mina Zahirjozdani",
+  "type": "typescript",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest run"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "isomorphic-ws": "^5.0.0"
+  }
+}
