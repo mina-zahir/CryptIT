@@ -2,77 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>USDT Token Events</title>
+  <title>USDT Transfer Events</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: Tahoma, Verdana, Segoe, sans-serif;
-      background-color: #f5f7fa;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-      direction: ltr;
-    }
-    h1 {
-      text-align: center;
-      color: #007acc;
-    }
-    #events-list {
-      max-width: 700px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-      padding: 15px;
-      overflow-y: auto;
-      max-height: 500px;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    .event-item {
-      border-bottom: 1px solid #ddd;
-      padding: 10px 0;
-    }
-    .event-item:last-child {
-      border-bottom: none;
-    }
-    .timestamp {
-      display: inline-block;
-      font-size: 12px;
-      color: #999;
-      width: 130px;
-      text-align: left;
-      direction: ltr;
-      user-select: none;
-    }
-    .event-content {
-      display: inline-block;
-      max-width: 520px;
-      word-wrap: break-word;
-    }
-    #refresh-btn {
-      display: block;
-      margin: 0 auto 15px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 20px;
-      background-color: #007acc;
-      color: white;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
-    }
-    #refresh-btn:hover {
-      background-color: #005a99;
-    }
-    #status {
-      text-align: center;
-      color: #666;
-      font-size: 13px;
-      min-height: 18px;
-      margin-bottom: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <h1>USDT Token Transfer Events</h1>
@@ -85,7 +17,32 @@
     const status = document.getElementById('status');
     const refreshBtn = document.getElementById('refresh-btn');
 
-    // Function to load events from the server
+    // Convert raw BigInt value to human-readable token amount string
+    function formatTokenAmount(valueRaw, decimals = 6) {
+      const bigValue = BigInt(valueRaw);
+      const divisor = 10n ** BigInt(decimals);
+      const whole = bigValue / divisor;
+      const fraction = bigValue % divisor;
+      const fractionStr = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+      return fractionStr ? `${whole.toString()}.${fractionStr}` : whole.toString();
+    }
+
+    // Format event arguments for display
+    function formatTransferEvent(eventArgs) {
+      const from = eventArgs[0];
+      const to = eventArgs[1];
+      const amountRaw = eventArgs[2];
+      const amountFormatted = formatTokenAmount(amountRaw);
+
+      return `
+        <div class="event-item">
+          <div><strong>From:</strong> <span class="address">${from}</span></div>
+          <div><strong>To:</strong> <span class="address">${to}</span></div>
+          <div><strong>Amount:</strong> ${amountFormatted} USDT</div>
+        </div>
+      `;
+    }
+
     async function loadEvents() {
       status.textContent = 'Fetching events...';
       try {
@@ -93,36 +50,32 @@
         const events = await res.json();
 
         if (!events.length) {
-          eventsList.innerHTML = '<p style="text-align:center; color:#777;">No events found.</p>';
+          eventsList.innerHTML = '<p class="no-events">No events found.</p>';
           status.textContent = '';
           return;
         }
 
-        const html = events.map(evStr => {
-          // Add current time as timestamp for each event display
-          const time = new Date().toLocaleTimeString('fa-IR');
-          return `<div class="event-item">
-            <span class="timestamp">${time}</span>
-            <div class="event-content">${evStr}</div>
-          </div>`;
+        const html = events.map(eventStr => {
+          // Extract JSON array from event string: `Event Transfer: [...]`
+          const argsMatch = eventStr.match(/\[(.*)\]/);
+          if (!argsMatch) return '';
+          const args = JSON.parse(`[${argsMatch[1]}]`);
+          return formatTransferEvent(args);
         }).join('');
 
         eventsList.innerHTML = html;
         status.textContent = `Number of events: ${events.length}`;
       } catch (err) {
-        eventsList.innerHTML = '<p style="color: red; text-align: center;">Error fetching events</p>';
+        eventsList.innerHTML = '<p class="error">Error fetching events</p>';
         status.textContent = '';
         console.error(err);
       }
     }
 
-    // Reload events when button clicked
     refreshBtn.addEventListener('click', loadEvents);
 
-    // Initial load of events
     loadEvents();
 
-    // Auto refresh every 10 seconds
     setInterval(loadEvents, 10000);
   </script>
 </body>
