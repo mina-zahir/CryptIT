@@ -130,4 +130,3 @@ export function resilientEventListener(args: ResilientEventListenerArgs) {
 
     return { stop };
 }
-
