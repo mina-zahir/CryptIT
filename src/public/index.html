@@ -1,24 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><title>Event Listener</title></head>
+<head>
+  <meta charset="UTF-8" />
+  <title>USDT Token Events</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Tahoma, Verdana, Segoe, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      direction: ltr;
+    }
+    h1 {
+      text-align: center;
+      color: #007acc;
+    }
+    #events-list {
+      max-width: 700px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      padding: 15px;
+      overflow-y: auto;
+      max-height: 500px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .event-item {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    .event-item:last-child {
+      border-bottom: none;
+    }
+    .timestamp {
+      display: inline-block;
+      font-size: 12px;
+      color: #999;
+      width: 130px;
+      text-align: left;
+      direction: ltr;
+      user-select: none;
+    }
+    .event-content {
+      display: inline-block;
+      max-width: 520px;
+      word-wrap: break-word;
+    }
+    #refresh-btn {
+      display: block;
+      margin: 0 auto 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background-color: #007acc;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    #refresh-btn:hover {
+      background-color: #005a99;
+    }
+    #status {
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
 <body>
-  <h1>Contrac Events:</h1>
-  <ul id="eventsList"></ul>
+  <h1>USDT Token Transfer Events</h1>
+  <button id="refresh-btn">Reload Events</button>
+  <div id="status"></div>
+  <div id="events-list">Loading...</div>
 
   <script>
-    async function fetchEvents() {
-      const res = await fetch('/events');
-      const events = await res.json();
-      const ul = document.getElementById('eventsList');
-      ul.innerHTML = '';
-      events.forEach(ev => {
-        const li = document.createElement('li');
-        li.textContent = ev;
-        ul.appendChild(li);
-      });
+    const eventsList = document.getElementById('events-list');
+    const status = document.getElementById('status');
+    const refreshBtn = document.getElementById('refresh-btn');
+
+    // Function to load events from the server
+    async function loadEvents() {
+      status.textContent = 'Fetching events...';
+      try {
+        const res = await fetch('/events');
+        const events = await res.json();
+
+        if (!events.length) {
+          eventsList.innerHTML = '<p style="text-align:center; color:#777;">No events found.</p>';
+          status.textContent = '';
+          return;
+        }
+
+        const html = events.map(evStr => {
+          // Add current time as timestamp for each event display
+          const time = new Date().toLocaleTimeString('fa-IR');
+          return `<div class="event-item">
+            <span class="timestamp">${time}</span>
+            <div class="event-content">${evStr}</div>
+          </div>`;
+        }).join('');
+
+        eventsList.innerHTML = html;
+        status.textContent = `Number of events: ${events.length}`;
+      } catch (err) {
+        eventsList.innerHTML = '<p style="color: red; text-align: center;">Error fetching events</p>';
+        status.textContent = '';
+        console.error(err);
+      }
     }
-    setInterval(fetchEvents, 3000); // هر 3 ثانیه لیست به‌روز شود
-    fetchEvents();
+
+    // Reload events when button clicked
+    refreshBtn.addEventListener('click', loadEvents);
+
+    // Initial load of events
+    loadEvents();
+
+    // Auto refresh every 10 seconds
+    setInterval(loadEvents, 10000);
   </script>
 </body>
 </html>
