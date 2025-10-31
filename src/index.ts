@@ -62,7 +62,7 @@ const listener = resilientEventListener({
   contractAddress,
   abi,
   eventName,
-  log: (msg:any) => console.log(msg),
+  log: (level, msg) => console.log(`[${level.toUpperCase()}] ${msg}`),
   callback: (event:any) => {
     if(event) {
       // const evStr = `Event ${event.name}: ${JSON.stringify(event.args)}`;
